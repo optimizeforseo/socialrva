@@ -19,32 +19,17 @@ export default function Home() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isCheckingOnboarding, setIsCheckingOnboarding] = useState(true);
 
-  // Check if user is already authenticated and onboarded
+  // Check if user is already authenticated - direct dashboard
   useEffect(() => {
     const checkOnboardingStatus = async () => {
-      // Wait for auth to load
       if (authLoading) return;
 
-      // If user is authenticated, check onboarding status
+      // Authenticated user ko direct dashboard pe bhejo
       if (isAuthenticated && user) {
-        try {
-          // Check if onboarding is complete from user data
-          const isOnboardingComplete = user.profile?.isOnboardingComplete;
-          
-          if (isOnboardingComplete) {
-            // User is onboarded, redirect to dashboard
-            console.log('User already onboarded, redirecting to dashboard...');
-            router.push('/dashboard');
-            return;
-          }
-          // If not onboarded, don't redirect - let them stay on homepage
-          // They will go to onboarding when they click login button
-        } catch (error) {
-          console.error('Error checking onboarding status:', error);
-        }
+        router.push('/dashboard');
+        return;
       }
       
-      // Not authenticated or needs onboarding, show landing page
       setIsCheckingOnboarding(false);
     };
 

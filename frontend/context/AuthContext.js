@@ -62,14 +62,7 @@ export const AuthProvider = ({ children }) => {
       setToken(authToken);
       setUser(userData);
       setIsAuthenticated(true);
-
-      // Smart routing based on onboarding status
-      const isOnboardingComplete = userData.profile?.isOnboardingComplete;
-      if (isOnboardingComplete) {
-        router.push('/dashboard');
-      } else {
-        router.push('/onboarding');
-      }
+      router.push('/dashboard');
     } catch (error) {
       console.error('Error during login:', error);
     }
@@ -132,19 +125,23 @@ export const AuthProvider = ({ children }) => {
   // Refresh user data from server
   const refreshUser = async () => {
     try {
-      if (!token) return;
+      const storedToken = token || localStorage.getItem('token');
+      if (!storedToken) return;
 
-      const response = await fetch('/api/auth/me', {
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5002/api';
+      const response = await fetch(`${apiBaseUrl}/auth/me`, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${storedToken}`
         }
       });
 
       if (response.ok) {
         const data = await response.json();
-        updateUser(data.data.user);
+        const freshUser = data.data.user;
+        localStorage.setItem('user', JSON.stringify(freshUser));
+        setUser(freshUser);
+        return freshUser;
       } else {
-        // Token might be invalid, logout
         logout();
       }
     } catch (error) {

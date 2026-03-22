@@ -18,7 +18,7 @@ export default function RouteGuard({ children }) {
         const userStr = localStorage.getItem('user');
 
         // Public routes that don't need authentication
-        const publicRoutes = ['/', '/auth/callback'];
+        const publicRoutes = ['/', '/auth/callback', '/auth/login', '/auth/page', '/auth/error'];
         if (publicRoutes.includes(pathname)) {
           setIsAuthorized(true);
           setIsLoading(false);
@@ -32,21 +32,12 @@ export default function RouteGuard({ children }) {
         }
 
         const user = JSON.parse(userStr);
-        const isOnboardingComplete = user.profile?.isOnboardingComplete;
 
-        // Route protection logic
+        // Onboarding bypassed - direct dashboard access
+        // If user lands on /onboarding, redirect to dashboard
         if (pathname === '/onboarding') {
-          // Onboarding route - only for incomplete users
-          if (isOnboardingComplete) {
-            router.push('/dashboard');
-            return;
-          }
-        } else if (pathname.startsWith('/dashboard') || pathname.startsWith('/analytics') || pathname.startsWith('/insights') || pathname.startsWith('/overview')) {
-          // Protected routes - only for complete users
-          if (!isOnboardingComplete) {
-            router.push('/onboarding');
-            return;
-          }
+          router.push('/dashboard');
+          return;
         }
 
         setIsAuthorized(true);

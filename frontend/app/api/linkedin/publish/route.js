@@ -1,32 +1,89 @@
 import { NextResponse } from "next/server";
-import linkedinService from "../../../services/linkedinService";
 
 export async function POST(request) {
   try {
     const { content, userId, accessToken } = await request.json();
 
-    if (!content || !userId || !accessToken) {
+    if (!content) {
       return NextResponse.json(
-        { error: "Content, userId, and accessToken are required" },
+        { error: "Content is required" },
         { status: 400 }
       );
     }
 
-    // Validate the access token first
-    const isValidToken = await linkedinService.validateToken(accessToken);
-    if (!isValidToken) {
+    // Development mode with no token - mock publish
+    if (!accessToken || accessToken === 'dev_mock_token_not_real') {
+      console.log("📝 Mock LinkedIn publish (no real token):", {
+        userId,
+        contentPreview: content.substring(0, 100) + "...",
+      });
+
+      return NextResponse.json({
+        success: true,
+        postId: "mock_post_" + Date.now(),
+        message: "Post published successfully (mock - connect LinkedIn for real posts)",
+        mock: true,
+      });
+    }
+
+    // Production - real LinkedIn API call
+    const clientId = process.env.LINKEDIN_CLIENT_ID;
+    const clientSecret = process.env.LINKEDIN_CLIENT_SECRET;
+
+    if (!clientId || !clientSecret) {
+      return NextResponse.json(
+        { error: "LinkedIn OAuth not configured" },
+        { status: 500 }
+      );
+    }
+
+    // Get user profile to get LinkedIn URN
+    const profileRes = await fetch("https://api.linkedin.com/v2/userinfo", {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    if (!profileRes.ok) {
       return NextResponse.json(
         { error: "Invalid or expired access token. Please re-authenticate." },
         { status: 401 }
       );
     }
 
-    // Create the LinkedIn post
-    const result = await linkedinService.createPost(
-      accessToken,
-      content,
-      userId
+    const profile = await profileRes.json();
+    const authorUrn = `urn:li:person:${profile.sub}`;
+
+    // Publish post to LinkedIn
+    const publishRes = await fetch(
+      "https://api.linkedin.com/v2/ugcPosts",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+          "X-Restli-Protocol-Version": "2.0.0",
+        },
+        body: JSON.stringify({
+          author: authorUrn,
+          lifecycleState: "PUBLISHED",
+          specificContent: {
+            "com.linkedin.ugc.ShareContent": {
+              shareCommentary: { text: content },
+              shareMediaCategory: "NONE",
+            },
+          },
+          visibility: {
+            "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC",
+          },
+        }),
+      }
     );
+
+    if (!publishRes.ok) {
+      const err = await publishRes.json();
+      throw new Error(err.message || "LinkedIn publish failed");
+    }
+
+    const result = await publishRes.json();
 
     return NextResponse.json({
       success: true,
@@ -36,20 +93,10 @@ export async function POST(request) {
   } catch (error) {
     console.error("LinkedIn publish error:", error);
 
-    // Handle specific LinkedIn API errors
-    if (error.message.includes("Invalid access token")) {
+    if (error.message?.includes("token")) {
       return NextResponse.json(
-        {
-          error: "Access token expired. Please re-authenticate with LinkedIn.",
-        },
+        { error: "Access token expired. Please re-authenticate with LinkedIn." },
         { status: 401 }
-      );
-    }
-
-    if (error.message.includes("Rate limit")) {
-      return NextResponse.json(
-        { error: "LinkedIn API rate limit exceeded. Please try again later." },
-        { status: 429 }
       );
     }
 

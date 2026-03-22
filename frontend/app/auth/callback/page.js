@@ -80,7 +80,12 @@ export default function AuthCallback() {
         
         // Store authentication data in localStorage
         localStorage.setItem('token', data.data.token);
-        localStorage.setItem('user', JSON.stringify(data.data.user));
+        // Save accessToken inside user object so publish pages can use it
+        const userToStore = {
+          ...data.data.user,
+          accessToken: data.data.user.accessToken || null
+        };
+        localStorage.setItem('user', JSON.stringify(userToStore));
 
         // Trigger a storage event to update AuthContext
         window.dispatchEvent(new Event('storage'));
@@ -92,23 +97,11 @@ export default function AuthCallback() {
         setUserType(isOnboardingComplete ? 'existing' : 'new');
         setStatus('success');
 
-        if (routing.shouldOnboard) {
-          // User needs onboarding (new or incomplete)
-          setMessage(routing.isNewUser 
-            ? 'Welcome! Setting up your personalized experience...' 
-            : 'Welcome back! Let\'s complete your setup...');
-          setTimeout(() => {
-            console.log('Redirecting to:', routing.redirectTo);
-            router.push(routing.redirectTo);
-          }, 1500);
-        } else {
-          // User already onboarded, go to dashboard
-          setMessage('Welcome back! Redirecting to your dashboard...');
-          setTimeout(() => {
-            console.log('Redirecting to:', routing.redirectTo);
-            router.push(routing.redirectTo);
-          }, 1500);
-        }
+        // Always redirect to dashboard - onboarding bypassed
+        setMessage('Welcome! Redirecting to your dashboard...');
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 1500);
 
       } catch (error) {
         console.error('Authentication error:', error);

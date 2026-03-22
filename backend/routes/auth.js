@@ -201,46 +201,51 @@ router.post("/linkedin/callback", async (req, res) => {
     }
 
     // For development - simulate LinkedIn OAuth response
-    // In production, you would make actual API calls to LinkedIn
     if (process.env.NODE_ENV === 'development') {
-      // Simulate user data for development
+      // Fixed mock data - same user har baar
       const mockUserData = {
-        sub: 'linkedin_' + Math.random().toString(36).substring(7),
+        sub: 'linkedin_dev_user_001',
         email: 'demo@socialrva.com',
         given_name: 'Demo',
         family_name: 'User',
         picture: 'https://via.placeholder.com/150'
       };
 
-      // Check if user exists
-      let user = await User.findOne({ email: mockUserData.email });
+      // Check if user exists by linkedinId first, then email
+      let user = await User.findOne({ linkedinId: mockUserData.sub });
       let isNewUser = false;
 
       if (!user) {
-        // Create new user for demo
-        isNewUser = true;
-        user = await User.create({
-          email: mockUserData.email,
-          firstName: mockUserData.given_name,
-          lastName: mockUserData.family_name,
-          linkedinId: mockUserData.sub,
-          profilePicture: mockUserData.picture,
-          isVerified: true,
-          profile: {
-            isOnboardingComplete: false // New users need onboarding
-          }
-        });
+        user = await User.findOne({ email: mockUserData.email });
+        if (user) {
+          // Link LinkedIn ID to existing user
+          user.linkedinId = mockUserData.sub;
+          user.lastLoginAt = new Date();
+          await user.save();
+        } else {
+          // Brand new user - onboarding bypass
+          isNewUser = true;
+          user = await User.create({
+            email: mockUserData.email,
+            firstName: mockUserData.given_name,
+            lastName: mockUserData.family_name,
+            linkedinId: mockUserData.sub,
+            profilePicture: mockUserData.picture,
+            isVerified: true,
+            profile: {
+              isOnboardingComplete: true // Bypass onboarding
+            }
+          });
+        }
       } else {
-        // Update existing user
-        user.linkedinId = mockUserData.sub;
+        // Existing user - just update last login
         user.lastLoginAt = new Date();
         await user.save();
       }
 
-      // Generate token
       const token = generateToken(user._id);
+      const isOnboardingComplete = user.profile?.isOnboardingComplete || false;
 
-      // Return user data with onboarding status for smart routing
       return res.json({
         success: true,
         data: {
@@ -252,22 +257,21 @@ router.post("/linkedin/callback", async (req, res) => {
             fullName: user.fullName,
             profilePicture: user.profilePicture,
             linkedinId: user.linkedinId,
+            accessToken: 'dev_mock_token_not_real', // Dev placeholder
             subscription: user.subscription,
             preferences: user.preferences,
-            profile: {
-              ...user.profile,
-              isOnboardingComplete: user.profile?.isOnboardingComplete || false
-            },
+            profile: user.profile,
+            profileAnalysis: user.profileAnalysis,
             creditsRemaining: user.creditsRemaining,
             lastLoginAt: user.lastLoginAt,
-            isNewUser: isNewUser
+            onboardingCompletedAt: user.onboardingCompletedAt,
+            isNewUser
           },
           token,
-          // Add routing hints for frontend
           routing: {
-            shouldOnboard: !user.profile?.isOnboardingComplete,
-            isNewUser: isNewUser,
-            redirectTo: user.profile?.isOnboardingComplete ? '/dashboard' : '/onboarding'
+            shouldOnboard: !isOnboardingComplete,
+            isNewUser,
+            redirectTo: isOnboardingComplete ? '/dashboard' : '/onboarding'
           }
         },
       });
@@ -338,7 +342,7 @@ router.post("/linkedin/callback", async (req, res) => {
         if (profileData.picture) user.profilePicture = profileData.picture;
         await user.save();
       } else {
-        // Create new user
+        // Create new user - onboarding bypass
         isNewUser = true;
         user = await User.create({
           email: profileData.email,
@@ -348,7 +352,7 @@ router.post("/linkedin/callback", async (req, res) => {
           profilePicture: profileData.picture,
           isVerified: true,
           profile: {
-            isOnboardingComplete: false // New users need onboarding
+            isOnboardingComplete: true // Bypass onboarding
           }
         });
       }
@@ -364,6 +368,7 @@ router.post("/linkedin/callback", async (req, res) => {
 
     // Generate token
     const token = generateToken(user._id);
+    const isOnboardingComplete = user.profile?.isOnboardingComplete || false;
 
     // Return user data with onboarding status for smart routing
     res.json({
@@ -377,22 +382,21 @@ router.post("/linkedin/callback", async (req, res) => {
           fullName: user.fullName,
           profilePicture: user.profilePicture,
           linkedinId: user.linkedinId,
+          accessToken, // LinkedIn access token for publishing
           subscription: user.subscription,
           preferences: user.preferences,
-          profile: {
-            ...user.profile,
-            isOnboardingComplete: user.profile?.isOnboardingComplete || false
-          },
+          profile: user.profile,
+          profileAnalysis: user.profileAnalysis,
           creditsRemaining: user.creditsRemaining,
           lastLoginAt: user.lastLoginAt,
-          isNewUser: isNewUser
+          onboardingCompletedAt: user.onboardingCompletedAt,
+          isNewUser
         },
         token,
-        // Add routing hints for frontend
         routing: {
-          shouldOnboard: !user.profile?.isOnboardingComplete,
-          isNewUser: isNewUser,
-          redirectTo: user.profile?.isOnboardingComplete ? '/dashboard' : '/onboarding'
+          shouldOnboard: !isOnboardingComplete,
+          isNewUser,
+          redirectTo: isOnboardingComplete ? '/dashboard' : '/onboarding'
         }
       },
     });
@@ -514,10 +518,13 @@ router.get("/me", protect, async (req, res) => {
           linkedinId: user.linkedinId,
           subscription: user.subscription,
           preferences: user.preferences,
+          profile: user.profile,
+          profileAnalysis: user.profileAnalysis,
           creditsRemaining: user.creditsRemaining,
           isVerified: user.isVerified,
           createdAt: user.createdAt,
           lastLoginAt: user.lastLoginAt,
+          onboardingCompletedAt: user.onboardingCompletedAt,
         },
       },
     });
