@@ -11,7 +11,11 @@ export default function AuthCallback() {
   const [message, setMessage] = useState('Authenticating with LinkedIn...');
 
   useEffect(() => {
+    let called = false;
     const handleCallback = async () => {
+      if (called) return;
+      called = true;
+
       try {
         const code = searchParams.get('code');
         const error = searchParams.get('error');
