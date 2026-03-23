@@ -113,10 +113,10 @@ process.on("SIGTERM", () => {
 
 process.on("SIGINT", () => {
   console.log("SIGINT received. Shutting down gracefully...");
-  mongoose.connection.close(() => {
+  mongoose.connection.close().then(() => {
     console.log("MongoDB connection closed.");
     process.exit(0);
-  });
+  }).catch(() => process.exit(0));
 });
 
 app.listen(PORT, () => {
