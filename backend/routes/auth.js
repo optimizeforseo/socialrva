@@ -293,6 +293,7 @@ router.post("/linkedin/callback", async (req, res) => {
     }
 
     // Exchange code for access token
+    console.log('LinkedIn token exchange - redirectUri:', redirectUri);
     const tokenResponse = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
       method: 'POST',
       headers: {
@@ -307,14 +308,30 @@ router.post("/linkedin/callback", async (req, res) => {
       }),
     });
 
+    const tokenText = await tokenResponse.text();
     if (!tokenResponse.ok) {
-      const errorData = await tokenResponse.text();
-      console.error('LinkedIn token exchange error:', errorData);
-      throw new Error('Failed to exchange code for token');
+      console.error('LinkedIn token exchange error:', tokenResponse.status, tokenText);
+      let errorMsg = 'LinkedIn token exchange failed';
+      try {
+        const errJson = JSON.parse(tokenText);
+        errorMsg = errJson.error_description || errJson.error || tokenText;
+      } catch(e) { errorMsg = tokenText; }
+      return res.status(400).json({
+        success: false,
+        error: errorMsg,
+      });
     }
 
-    const tokenData = await tokenResponse.json();
+    const tokenData = JSON.parse(tokenText);
     const accessToken = tokenData.access_token;
+
+    if (!accessToken) {
+      console.error('No access_token in LinkedIn response:', tokenData);
+      return res.status(400).json({
+        success: false,
+        error: 'No access token received from LinkedIn',
+      });
+    }
 
     // Get user profile from LinkedIn
     const profileResponse = await fetch('https://api.linkedin.com/v2/userinfo', {
@@ -325,7 +342,7 @@ router.post("/linkedin/callback", async (req, res) => {
 
     if (!profileResponse.ok) {
       const errorData = await profileResponse.text();
-      console.error('LinkedIn profile fetch error:', errorData);
+      console.error('LinkedIn profile fetch error:', profileResponse.status, errorData);
       throw new Error('Failed to get user profile from LinkedIn');
     }
 
