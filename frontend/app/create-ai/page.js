@@ -870,12 +870,36 @@ Create a similar post that follows the same structure and viral elements but wit
       <div className="fixed top-0 left-0 right-0 z-50 bg-slate-800 border-b border-slate-700 px-6 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
+            {/* Back to Dashboard */}
+            <button
+              onClick={() => router.push('/dashboard')}
+              className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors mr-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+              </svg>
+              <span className="text-sm hidden sm:inline">Dashboard</span>
+            </button>
+            <div className="w-px h-5 bg-slate-600" />
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">S</span>
             </div>
             <span className="text-white font-semibold">Create with AI</span>
           </div>
           <div className="flex items-center space-x-3">
+            {/* User info */}
+            {user && (
+              <div className="flex items-center space-x-2 mr-2">
+                {user.profilePicture ? (
+                  <img src={user.profilePicture} alt={user.fullName} className="w-8 h-8 rounded-full object-cover" />
+                ) : (
+                  <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-blue-700 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                    {user.firstName?.charAt(0)}{user.lastName?.charAt(0)}
+                  </div>
+                )}
+                <span className="text-sm text-gray-300 hidden md:inline">{user.fullName || `${user.firstName} ${user.lastName}`}</span>
+              </div>
+            )}
             <button className="px-4 py-2 text-gray-400 hover:text-white text-sm flex items-center space-x-2">
               <svg
                 className="w-4 h-4"
