@@ -200,15 +200,15 @@ router.post("/linkedin/callback", async (req, res) => {
       });
     }
 
-    // For development - simulate LinkedIn OAuth response
-    if (process.env.NODE_ENV === 'development') {
+    // For development mock mode only (USE_MOCK_AUTH=true in .env)
+    if (process.env.USE_MOCK_AUTH === 'true') {
       // Fixed mock data - same user har baar
       const mockUserData = {
         sub: 'linkedin_dev_user_001',
         email: 'demo@socialrva.com',
-        given_name: 'Demo',
+        given_name: 'Dev',
         family_name: 'User',
-        picture: 'https://via.placeholder.com/150'
+        picture: null
       };
 
       // Check if user exists by linkedinId first, then email
@@ -238,7 +238,10 @@ router.post("/linkedin/callback", async (req, res) => {
           });
         }
       } else {
-        // Existing user - just update last login
+        // Existing user - update name/picture too in case mock data changed
+        user.firstName = mockUserData.given_name;
+        user.lastName = mockUserData.family_name;
+        user.profilePicture = mockUserData.picture;
         user.lastLoginAt = new Date();
         await user.save();
       }

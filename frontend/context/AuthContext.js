@@ -77,7 +77,8 @@ export const AuthProvider = ({ children }) => {
     setToken(null);
     setUser(null);
     setIsAuthenticated(false);
-    router.push('/');
+    // Hard redirect to clear all React state
+    window.location.href = '/';
   };
 
   // Update user data

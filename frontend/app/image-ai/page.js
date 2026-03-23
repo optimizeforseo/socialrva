@@ -556,7 +556,7 @@ export default function CreateAI() {
 
   // Publish to LinkedIn
   const handlePublishToLinkedIn = async () => {
-    if (!user || user.isDemoMode || !generatedContent) {
+    if (!user || !generatedContent) {
       setError("Please connect your LinkedIn account to publish");
       return;
     }
@@ -771,7 +771,7 @@ Create a similar post that follows the same structure and viral elements but wit
               </svg>
               <span>Add to queue</span>
             </button>
-            {user && !user.isDemoMode && generatedContent && (
+            {user && generatedContent && (
               <button
                 onClick={handlePublishToLinkedIn}
                 disabled={isPublishing}
@@ -796,7 +796,7 @@ Create a similar post that follows the same structure and viral elements but wit
                 )}
               </button>
             )}
-            {(!user || user.isDemoMode) && (
+            {!user && (
               <button className="px-4 py-2 bg-gray-600 text-gray-300 rounded-lg text-sm cursor-not-allowed">
                 Connect LinkedIn to Publish
               </button>
@@ -1966,9 +1966,7 @@ Create a similar post that follows the same structure and viral elements but wit
                           )}
                         </div>
                         <p className="text-sm text-gray-400">
-                          {user?.isDemoMode
-                            ? "Frontend Developer at Optimize For Seo || MERN Full Stack Developer || React JS"
-                            : "Content Creator using SocialSonic AI"}
+                          "Content Creator using SocialRva AI"
                         </p>
                         <p className="text-xs text-gray-500">Just now • 🌍</p>
                       </div>
