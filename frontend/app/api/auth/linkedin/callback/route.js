@@ -14,7 +14,7 @@ export async function POST(request) {
 
     // Verify state parameter (basic format check)
     // Note: Full validation should be done client-side against localStorage
-    if (!state || !state.startsWith("socialsonic-auth-")) {
+    if (!state || (!state.startsWith("socialrva-auth-") && !state.startsWith("socialsonic-auth-"))) {
       return NextResponse.json(
         { error: "Invalid state parameter format" },
         { status: 400 }

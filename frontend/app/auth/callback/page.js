@@ -3,115 +3,66 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Icon } from '../../../components/ui/Icon';
 
 export default function AuthCallback() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [status, setStatus] = useState('processing'); // processing, success, error
+  const [status, setStatus] = useState('processing');
   const [message, setMessage] = useState('Authenticating with LinkedIn...');
-  const [userType, setUserType] = useState(null); // new, existing
 
   useEffect(() => {
     const handleCallback = async () => {
       try {
         const code = searchParams.get('code');
-        const state = searchParams.get('state');
         const error = searchParams.get('error');
 
-        // Check for OAuth errors
-        if (error) {
-          throw new Error(`LinkedIn OAuth error: ${error}`);
-        }
-
-        if (!code) {
-          throw new Error('No authorization code received');
-        }
-
-        // Verify state parameter for CSRF protection (optional for development)
-        const storedState = localStorage.getItem('linkedin_oauth_state');
-        if (storedState && state && state !== storedState) {
-          console.warn('State parameter mismatch - this could be a CSRF attack');
-          // In development, we'll continue but log the warning
-          // In production, you should throw an error here
-        }
-
-        // Clean up stored state
-        localStorage.removeItem('linkedin_oauth_state');
+        if (error) throw new Error(`LinkedIn OAuth error: ${error}`);
+        if (!code) throw new Error('No authorization code received');
 
         setMessage('Exchanging authorization code...');
 
-        // Get API base URL
-        const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-
-        // Exchange code for access token and user data
-        const response = await fetch(`${apiBaseUrl}/auth/linkedin/callback`, {
+        // Use backend which has LinkedIn credentials and handles full OAuth flow
+        const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5002/api';
+        const res = await fetch(`${apiBaseUrl}/auth/linkedin/callback`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ code }),
         });
 
-        if (!response.ok) {
-          let errorMessage = 'Authentication failed';
-          try {
-            const errorData = await response.json();
-            errorMessage = errorData.error || errorData.message || errorMessage;
-          } catch (e) {
-            // If response is not JSON, use status text
-            errorMessage = `Server error: ${response.status} ${response.statusText}`;
-          }
-          throw new Error(errorMessage);
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || 'Authentication failed');
         }
 
-        const data = await response.json();
-        
-        // Check if response has expected structure
-        if (!data.success || !data.data) {
+        const data = await res.json();
+
+        if (!data.success || !data.data?.user) {
           throw new Error('Invalid response from server');
         }
 
-        console.log('LinkedIn Auth Response:', {
-          routing: data.data.routing,
-          isOnboardingComplete: data.data.user.profile?.isOnboardingComplete,
-          userId: data.data.user.id
-        });
-        
-        // Store authentication data in localStorage
-        localStorage.setItem('token', data.data.token);
-        // Save accessToken inside user object so publish pages can use it
-        const userToStore = {
-          ...data.data.user,
-          accessToken: data.data.user.accessToken || null
-        };
-        localStorage.setItem('user', JSON.stringify(userToStore));
+        setMessage('Setting up your account...');
 
-        // Trigger a storage event to update AuthContext
+        const { user, token } = data.data;
+
+        // Store auth data
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify({
+          ...user,
+          fullName: user.fullName || `${user.firstName} ${user.lastName}`,
+          profile: { isOnboardingComplete: true },
+        }));
+        localStorage.removeItem('linkedin_oauth_state');
         window.dispatchEvent(new Event('storage'));
 
-        // Use backend routing hints for smart navigation
-        const routing = data.data.routing;
-        const isOnboardingComplete = data.data.user.profile?.isOnboardingComplete;
-        
-        setUserType(isOnboardingComplete ? 'existing' : 'new');
         setStatus('success');
-
-        // Always redirect to dashboard - onboarding bypassed
         setMessage('Welcome! Redirecting to your dashboard...');
-        setTimeout(() => {
-          router.push('/dashboard');
-        }, 1500);
+        setTimeout(() => router.push('/dashboard'), 1500);
 
       } catch (error) {
         console.error('Authentication error:', error);
         setStatus('error');
         setMessage(error.message || 'Authentication failed');
-        
-        // Redirect to home page after error
-        setTimeout(() => {
-          router.push('/');
-        }, 3000);
+        setTimeout(() => router.push('/'), 3000);
       }
     };
 
@@ -120,7 +71,6 @@ export default function AuthCallback() {
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center relative overflow-hidden">
-      {/* Background Effects */}
       <div className="absolute inset-0">
         <motion.div
           animate={{ rotate: [0, 360] }}
@@ -135,125 +85,63 @@ export default function AuthCallback() {
       </div>
 
       <div className="relative z-10 text-center max-w-md mx-auto px-6">
-        {/* Logo */}
         <motion.div
           initial={{ scale: 0, rotate: -180 }}
           animate={{ scale: 1, rotate: 0 }}
           transition={{ duration: 0.8 }}
           className="mb-8"
         >
-          <img 
-            src="/socialrva-logo-full.png" 
-            alt="SocialRva" 
-            className="h-16 object-contain mx-auto drop-shadow-2xl"
-          />
+          <img src="/socialrva-logo-full.png" alt="SocialRva" className="h-16 object-contain mx-auto drop-shadow-2xl" />
         </motion.div>
 
-        {/* Status Icon */}
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ delay: 0.3 }}
-          className="mb-6"
-        >
+        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.3 }} className="mb-6">
           {status === 'processing' && (
-            <div className="w-16 h-16 mx-auto">
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                className="w-16 h-16 border-4 border-blue-500/30 border-t-blue-500 rounded-full"
-              />
-            </div>
-          )}
-          
-          {status === 'success' && (
             <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mx-auto"
-            >
-              <Icon name="check" size={32} className="text-white" />
+              animate={{ rotate: 360 }}
+              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+              className="w-16 h-16 border-4 border-blue-500/30 border-t-blue-500 rounded-full mx-auto"
+            />
+          )}
+          {status === 'success' && (
+            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mx-auto">
+              <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
             </motion.div>
           )}
-          
           {status === 'error' && (
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center mx-auto"
-            >
-              <Icon name="x" size={32} className="text-white" />
+            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center mx-auto">
+              <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </motion.div>
           )}
         </motion.div>
 
-        {/* Status Message */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="mb-6"
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="mb-6">
           <h2 className="text-2xl font-bold text-white mb-2">
             {status === 'processing' && 'Authenticating...'}
-            {status === 'success' && userType === 'new' && 'Welcome to SocialRva!'}
-            {status === 'success' && userType === 'existing' && 'Welcome Back!'}
+            {status === 'success' && 'Welcome to SocialRva!'}
             {status === 'error' && 'Authentication Failed'}
           </h2>
           <p className="text-gray-300">{message}</p>
         </motion.div>
 
-        {/* User Type Indicator */}
-        {status === 'success' && userType && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7 }}
-            className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500/20 to-blue-600/20 border border-blue-500/30 rounded-full text-blue-300 text-sm font-medium backdrop-blur-sm"
-          >
-            <Icon 
-              name={userType === 'new' ? 'user-plus' : 'user-check'} 
-              size={16} 
-              className="mr-2" 
-            />
-            {userType === 'new' ? 'New User - Starting Onboarding' : 'Existing User - Going to Dashboard'}
-          </motion.div>
-        )}
-
-        {/* Progress Dots */}
         {status === 'processing' && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.8 }}
-            className="flex items-center justify-center space-x-2 mt-8"
-          >
+          <div className="flex items-center justify-center space-x-2 mt-8">
             {[0, 1, 2].map((i) => (
               <motion.div
                 key={i}
-                animate={{
-                  scale: [1, 1.5, 1],
-                  opacity: [0.5, 1, 0.5]
-                }}
-                transition={{
-                  duration: 1.5,
-                  repeat: Infinity,
-                  delay: i * 0.2
-                }}
+                animate={{ scale: [1, 1.5, 1], opacity: [0.5, 1, 0.5] }}
+                transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.2 }}
                 className="w-3 h-3 bg-blue-500 rounded-full"
               />
             ))}
-          </motion.div>
+          </div>
         )}
 
-        {/* Error Actions */}
         {status === 'error' && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8 }}
-            className="mt-6"
-          >
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }} className="mt-6">
             <motion.button
               onClick={() => router.push('/')}
               className="px-6 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all"
