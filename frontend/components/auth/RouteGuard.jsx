@@ -18,8 +18,8 @@ export default function RouteGuard({ children }) {
         const userStr = localStorage.getItem('user');
 
         // Public routes that don't need authentication
-        const publicRoutes = ['/', '/auth/callback', '/auth/login', '/auth/page', '/auth/error'];
-        if (publicRoutes.includes(pathname)) {
+        const publicRoutes = ['/', '/auth/callback', '/auth/success', '/auth/login', '/auth/page', '/auth/error'];
+        if (publicRoutes.includes(pathname) || pathname.startsWith('/auth/')) {
           setIsAuthorized(true);
           setIsLoading(false);
           return;
