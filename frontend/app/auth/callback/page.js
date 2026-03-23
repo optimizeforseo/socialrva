@@ -1,31 +1,31 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 
 export default function AuthCallback() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [status, setStatus] = useState('processing');
   const [message, setMessage] = useState('Authenticating with LinkedIn...');
+  const hasCalled = useRef(false);
 
   useEffect(() => {
-    let called = false;
-    const handleCallback = async () => {
-      if (called) return;
-      called = true;
+    if (hasCalled.current) return;
+    hasCalled.current = true;
 
+    const handleCallback = async () => {
       try {
-        const code = searchParams.get('code');
-        const error = searchParams.get('error');
+        // Read params directly from URL to avoid searchParams dependency
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        const error = urlParams.get('error');
 
         if (error) throw new Error(`LinkedIn OAuth error: ${error}`);
         if (!code) throw new Error('No authorization code received');
 
         setMessage('Exchanging authorization code...');
 
-        // Use backend which has LinkedIn credentials and handles full OAuth flow
         const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5002/api';
         const res = await fetch(`${apiBaseUrl}/auth/linkedin/callback`, {
           method: 'POST',
@@ -48,7 +48,6 @@ export default function AuthCallback() {
 
         const { user, token } = data.data;
 
-        // Store auth data
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify({
           ...user,
@@ -71,7 +70,7 @@ export default function AuthCallback() {
     };
 
     handleCallback();
-  }, [searchParams, router]);
+  }, []); // empty deps - run once only
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center relative overflow-hidden">
