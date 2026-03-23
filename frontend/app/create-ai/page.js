@@ -27,6 +27,10 @@ export default function CreateAI() {
   const [generatedImages, setGeneratedImages] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
 
+  // Image with write toggle
+  const [generateImageWithPost, setGenerateImageWithPost] = useState(false);
+  const [generatedPostImage, setGeneratedPostImage] = useState(null);
+
   // AI Twin states
   const [twinTab, setTwinTab] = useState("Generate");
   const [twinDescription, setTwinDescription] = useState("");
@@ -163,6 +167,22 @@ export default function CreateAI() {
         setGeneratedVariations(variations);
         setGeneratedContent(variations[0]);
         setSelectedVariation(0);
+
+        // Agar image toggle on hai toh topic se image bhi generate karo
+        if (generateImageWithPost) {
+          setGeneratedPostImage(null);
+          try {
+            const imgResponse = await aiService.generateImage(
+              `Professional LinkedIn post image about: ${inputContent}`,
+              { style: "realistic", aspectRatio: "landscape", userId: user?.id || null }
+            );
+            if (imgResponse.success) {
+              setGeneratedPostImage(imgResponse.data.imageUrl);
+            }
+          } catch (imgErr) {
+            console.log("Image generation failed:", imgErr.message);
+          }
+        }
       }
     } catch (error) {
       setError(error.message || "Failed to generate text");
@@ -1411,6 +1431,36 @@ Create a similar post that follows the same structure and viral elements but wit
                 )}
               </div>
 
+              {/* Generate Image with Post Toggle */}
+              <div className="bg-slate-700 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center space-x-2">
+                      <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <h3 className="text-sm font-medium text-white">Generate image with post</h3>
+                    </div>
+                    <p className="text-xs text-gray-400 mt-1">
+                      Topic se matching AI image bhi generate hogi
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setGenerateImageWithPost(!generateImageWithPost);
+                      if (generateImageWithPost) setGeneratedPostImage(null);
+                    }}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      generateImageWithPost ? "bg-blue-600" : "bg-gray-600"
+                    }`}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      generateImageWithPost ? "translate-x-6" : "translate-x-1"
+                    }`} />
+                  </button>
+                </div>
+              </div>
+
               {/* Generate Button */}
               <button
                 onClick={handleCreateText}
@@ -2216,11 +2266,31 @@ Create a similar post that follows the same structure and viral elements but wit
                         </div>
                       </div>
                     ) : (
-                      <div className="text-white whitespace-pre-wrap leading-relaxed">
-                        {typeof generatedContent.content === "string"
-                          ? generatedContent.content
-                          : generatedContent.content?.content ||
-                            "Generated content will appear here"}
+                      <div className="space-y-3">
+                        <div className="text-white whitespace-pre-wrap leading-relaxed">
+                          {typeof generatedContent.content === "string"
+                            ? generatedContent.content
+                            : generatedContent.content?.content ||
+                              "Generated content will appear here"}
+                        </div>
+                        {/* Generated image from toggle */}
+                        {generatedPostImage && (
+                          <div className="rounded-lg overflow-hidden border border-slate-600">
+                            <img
+                              src={generatedPostImage}
+                              alt="AI generated post image"
+                              className="w-full h-auto"
+                            />
+                          </div>
+                        )}
+                        {generateImageWithPost && !generatedPostImage && isGenerating && (
+                          <div className="rounded-lg bg-slate-700 h-40 flex items-center justify-center">
+                            <div className="text-center">
+                              <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                              <p className="text-gray-400 text-xs">Generating image...</p>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
