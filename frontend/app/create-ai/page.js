@@ -613,6 +613,7 @@ export default function CreateAI() {
           content: contentToPublish,
           userId: user.id,
           accessToken: user.accessToken,
+          imageUrl: generatedPostImage || null, // image toggle se generate hui image
         }),
       });
 
