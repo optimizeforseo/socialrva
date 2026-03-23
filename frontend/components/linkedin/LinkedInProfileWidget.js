@@ -204,25 +204,15 @@ export default function LinkedInProfileWidget() {
         <div className="flex items-center space-x-2">
           <div
             className={`w-2 h-2 rounded-full ${
-              localStorage.getItem("linkedinAccessToken")
+              profile?.id && profile.id !== 'demo-user-123456'
                 ? "bg-green-400 animate-pulse"
                 : "bg-yellow-400"
             }`}
           ></div>
           <span className="text-slate-400">
-            {localStorage.getItem("linkedinAccessToken")
-              ? "Live Data"
-              : "Demo Mode"}
+            {profile?.id && profile.id !== 'demo-user-123456' ? "Connected" : "Not Connected"}
           </span>
         </div>
-        {!localStorage.getItem("linkedinAccessToken") && (
-          <a
-            href="/"
-            className="text-blue-400 hover:text-blue-300 transition-colors"
-          >
-            Connect LinkedIn
-          </a>
-        )}
       </div>
     </div>
   );

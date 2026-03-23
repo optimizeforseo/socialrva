@@ -7,23 +7,18 @@
 
 class LinkedInService {
   constructor() {
-    // Enable demo mode by default to avoid LinkedIn rate limiting
-    this.isDemoMode = true;
+    this.isDemoMode = false; // Demo mode off by default
     this.apiBaseUrl = "https://api.linkedin.com/v2";
   }
 
   /**
    * Check if should use demo mode
+   * Only if explicitly enabled or no LinkedIn credentials
    */
   shouldUseDemoMode() {
-    // Use demo mode if:
-    // 1. Explicitly enabled
-    // 2. No LinkedIn credentials configured
-    // 3. In development environment
     return (
       this.isDemoMode ||
-      !process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID ||
-      process.env.NODE_ENV === "development"
+      !process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID
     );
   }
 

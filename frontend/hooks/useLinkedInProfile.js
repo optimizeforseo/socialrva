@@ -13,16 +13,26 @@ export function useLinkedInProfile() {
         setLoading(true);
         setError(null);
 
-        // Get access token from localStorage
-        const accessToken = localStorage.getItem("linkedinAccessToken");
-        const linkedinUserId = localStorage.getItem("linkedinUserId");
+        // Get access token from user object in localStorage
+        const userStr = localStorage.getItem("user");
+        const user = userStr ? JSON.parse(userStr) : null;
+        const accessToken = user?.accessToken || localStorage.getItem("linkedinAccessToken");
+        const linkedinUserId = user?.linkedinId || localStorage.getItem("linkedinUserId");
 
-        if (!accessToken) {
-          // Use demo data if no access token
-          const demoProfile = linkedinService.getDemoProfile();
-          const demoAnalytics = linkedinService.getDemoAnalytics();
-          setProfile(demoProfile);
-          setAnalytics(demoAnalytics);
+        if (!accessToken || accessToken === 'dev_mock_token_not_real') {
+          // No real token - show user data from localStorage instead of demo
+          if (user) {
+            setProfile({
+              id: user.id,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              email: user.email,
+              profilePicture: user.profilePicture,
+              headline: user.headline || '',
+              location: user.location || '',
+            });
+            setAnalytics(null);
+          }
           setLoading(false);
           return;
         }
@@ -58,18 +68,17 @@ export function useLinkedInProfile() {
   const refreshProfile = async () => {
     setLoading(true);
     try {
-      const accessToken = localStorage.getItem("linkedinAccessToken");
-      const linkedinUserId = localStorage.getItem("linkedinUserId");
+      const userStr = localStorage.getItem("user");
+      const user = userStr ? JSON.parse(userStr) : null;
+      const accessToken = user?.accessToken || localStorage.getItem("linkedinAccessToken");
+      const linkedinUserId = user?.linkedinId || localStorage.getItem("linkedinUserId");
 
-      if (accessToken) {
+      if (accessToken && accessToken !== 'dev_mock_token_not_real') {
         const profileData = await linkedinService.getProfile(accessToken);
         setProfile(profileData);
 
         if (linkedinUserId) {
-          const analyticsData = await linkedinService.getAnalytics(
-            accessToken,
-            linkedinUserId
-          );
+          const analyticsData = await linkedinService.getAnalytics(accessToken, linkedinUserId);
           setAnalytics(analyticsData);
         }
       }
