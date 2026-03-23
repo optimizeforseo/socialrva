@@ -63,6 +63,12 @@ export default function CreateAI() {
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
 
+  // Progress states
+  const [generatingProgress, setGeneratingProgress] = useState(0);
+  const [generatingStep, setGeneratingStep] = useState("");
+  const [publishingProgress, setPublishingProgress] = useState(0);
+  const [publishingStep, setPublishingStep] = useState("");
+
   // Preview enhancement states
   const [deviceView, setDeviceView] = useState("mobile"); // mobile, tablet, desktop
   const [generatedVariations, setGeneratedVariations] = useState([]);
@@ -118,8 +124,13 @@ export default function CreateAI() {
 
     setIsGenerating(true);
     setError(null);
+    setGeneratingProgress(0);
+    setGeneratingStep("Topic analyze kar rahe hain...");
 
     try {
+      setGeneratingProgress(15);
+      setGeneratingStep("AI content draft kar raha hai...");
+
       const response = await aiService.generateText(inputContent, {
         writingStyle: writingStyle.toLowerCase(),
         postCategory: postCategory.toLowerCase().replace(" ", "-"),
@@ -130,27 +141,24 @@ export default function CreateAI() {
       });
 
       if (response.success) {
-        // Generate 3 variations for user to choose from
+        setGeneratingProgress(40);
+        setGeneratingStep("Variation 1 ready, aur bana rahe hain...");
+
         const variations = [
-          {
-            id: 1,
-            content: response.data.content,
-            metadata: response.data.metadata,
-          },
+          { id: 1, content: response.data.content, metadata: response.data.metadata },
         ];
 
-        // Generate 2 more variations
         for (let i = 2; i <= 3; i++) {
           try {
-            const variationResponse = await aiService.generateText(
-              inputContent,
-              {
-                writingStyle: writingStyle.toLowerCase(),
-                postCategory: postCategory.toLowerCase().replace(" ", "-"),
-                useViralTemplate,
-                length: "medium",
-              }
-            );
+            setGeneratingProgress(40 + i * 15);
+            setGeneratingStep(`Variation ${i} generate ho rahi hai...`);
+
+            const variationResponse = await aiService.generateText(inputContent, {
+              writingStyle: writingStyle.toLowerCase(),
+              postCategory: postCategory.toLowerCase().replace(" ", "-"),
+              useViralTemplate,
+              length: "medium",
+            });
 
             if (variationResponse.success) {
               variations.push({
@@ -164,12 +172,16 @@ export default function CreateAI() {
           }
         }
 
+        setGeneratingProgress(85);
+        setGeneratingStep("Content finalize ho raha hai...");
+
         setGeneratedVariations(variations);
         setGeneratedContent(variations[0]);
         setSelectedVariation(0);
 
-        // Agar image toggle on hai toh topic se image bhi generate karo
         if (generateImageWithPost) {
+          setGeneratingProgress(88);
+          setGeneratingStep("Topic se image generate ho rahi hai...");
           setGeneratedPostImage(null);
           try {
             const imgResponse = await aiService.generateImage(
@@ -183,11 +195,18 @@ export default function CreateAI() {
             console.log("Image generation failed:", imgErr.message);
           }
         }
+
+        setGeneratingProgress(100);
+        setGeneratingStep("Done! ✅");
       }
     } catch (error) {
       setError(error.message || "Failed to generate text");
     } finally {
-      setIsGenerating(false);
+      setTimeout(() => {
+        setIsGenerating(false);
+        setGeneratingProgress(0);
+        setGeneratingStep("");
+      }, 600);
     }
   };
 
@@ -582,46 +601,51 @@ export default function CreateAI() {
     }
 
     setIsPublishing(true);
+    setPublishingProgress(0);
+    setPublishingStep("Post prepare ho raha hai...");
     setError(null);
 
     try {
       let contentToPublish = "";
 
-      // Extract content based on type
       if (typeof generatedContent.content === "string") {
         contentToPublish = generatedContent.content;
       } else if (generatedContent.type === "image") {
         contentToPublish = `Check out this AI-generated image! 🎨\n\nPrompt: ${generatedContent.content.prompt}`;
       } else if (generatedContent.type === "poll") {
-        contentToPublish = `${
-          generatedContent.content.question
-        }\n\nOptions:\n${generatedContent.content.options
-          .map((opt, i) => `${i + 1}. ${opt}`)
-          .join("\n")}`;
+        contentToPublish = `${generatedContent.content.question}\n\nOptions:\n${generatedContent.content.options.map((opt, i) => `${i + 1}. ${opt}`).join("\n")}`;
       } else if (generatedContent.content?.content) {
         contentToPublish = generatedContent.content.content;
       } else {
         throw new Error("No content available to publish");
       }
 
+      setPublishingProgress(25);
+      setPublishingStep("LinkedIn se connect ho rahe hain...");
+
+      if (generatedPostImage) {
+        setPublishingProgress(45);
+        setPublishingStep("Image upload ho rahi hai...");
+      }
+
       const response = await fetch("/api/linkedin/publish", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           content: contentToPublish,
           userId: user.id,
           accessToken: user.accessToken,
-          imageUrl: generatedPostImage || null, // image toggle se generate hui image
+          imageUrl: generatedPostImage || null,
         }),
       });
+
+      setPublishingProgress(85);
+      setPublishingStep("Post publish ho raha hai...");
 
       const data = await response.json();
 
       if (!response.ok) {
         if (response.status === 401) {
-          // Token expired, redirect to re-authenticate
           localStorage.removeItem("user");
           router.push("/");
           return;
@@ -629,18 +653,24 @@ export default function CreateAI() {
         throw new Error(data.error || "Failed to publish to LinkedIn");
       }
 
-      // Show success message
-      setError("✅ Successfully published to LinkedIn!");
+      setPublishingProgress(100);
+      setPublishingStep("Published! 🎉");
 
-      // Clear success message after 5 seconds
       setTimeout(() => {
-        setError(null);
-      }, 5000);
+        setError("✅ Successfully published to LinkedIn!");
+        setIsPublishing(false);
+        setPublishingProgress(0);
+        setPublishingStep("");
+      }, 800);
+
+      setTimeout(() => setError(null), 5500);
+      return;
     } catch (error) {
       console.error("Publish error:", error);
       setError(error.message || "Failed to publish to LinkedIn");
-    } finally {
       setIsPublishing(false);
+      setPublishingProgress(0);
+      setPublishingStep("");
     }
   };
 
@@ -766,6 +796,76 @@ Create a similar post that follows the same structure and viral elements but wit
 
   return (
     <div className="min-h-screen bg-slate-900 text-white flex">
+
+      {/* Generating Progress Overlay */}
+      {isGenerating && (
+        <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center">
+          <div className="bg-slate-800 border border-slate-600 rounded-2xl p-8 w-80 shadow-2xl">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 mx-auto mb-4 relative">
+                <svg className="w-16 h-16 -rotate-90" viewBox="0 0 64 64">
+                  <circle cx="32" cy="32" r="28" fill="none" stroke="#334155" strokeWidth="6"/>
+                  <circle cx="32" cy="32" r="28" fill="none" stroke="#9333ea" strokeWidth="6"
+                    strokeDasharray={`${2 * Math.PI * 28}`}
+                    strokeDashoffset={`${2 * Math.PI * 28 * (1 - generatingProgress / 100)}`}
+                    strokeLinecap="round"
+                    style={{ transition: "stroke-dashoffset 0.4s ease" }}
+                  />
+                </svg>
+                <span className="absolute inset-0 flex items-center justify-center text-white font-bold text-sm">
+                  {generatingProgress}%
+                </span>
+              </div>
+              <h3 className="text-white font-semibold text-lg mb-1">Content Generate Ho Raha Hai</h3>
+              <p className="text-purple-400 text-sm">{generatingStep}</p>
+            </div>
+            <div className="w-full bg-slate-700 rounded-full h-2">
+              <div
+                className="bg-gradient-to-r from-purple-600 to-purple-400 h-2 rounded-full transition-all duration-400"
+                style={{ width: `${generatingProgress}%` }}
+              />
+            </div>
+            <p className="text-gray-500 text-xs text-center mt-3">Thoda wait karo, AI kaam kar raha hai ✨</p>
+          </div>
+        </div>
+      )}
+
+      {/* Publishing Progress Overlay */}
+      {isPublishing && (
+        <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center">
+          <div className="bg-slate-800 border border-slate-600 rounded-2xl p-8 w-80 shadow-2xl">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 mx-auto mb-4 relative">
+                <svg className="w-16 h-16 -rotate-90" viewBox="0 0 64 64">
+                  <circle cx="32" cy="32" r="28" fill="none" stroke="#334155" strokeWidth="6"/>
+                  <circle cx="32" cy="32" r="28" fill="none" stroke="#2563eb" strokeWidth="6"
+                    strokeDasharray={`${2 * Math.PI * 28}`}
+                    strokeDashoffset={`${2 * Math.PI * 28 * (1 - publishingProgress / 100)}`}
+                    strokeLinecap="round"
+                    style={{ transition: "stroke-dashoffset 0.4s ease" }}
+                  />
+                </svg>
+                <span className="absolute inset-0 flex items-center justify-center text-white font-bold text-sm">
+                  {publishingProgress}%
+                </span>
+              </div>
+              <h3 className="text-white font-semibold text-lg mb-1">
+                {publishingProgress === 100 ? "Published! 🎉" : "LinkedIn Pe Publish Ho Raha Hai"}
+              </h3>
+              <p className="text-blue-400 text-sm">{publishingStep}</p>
+            </div>
+            <div className="w-full bg-slate-700 rounded-full h-2">
+              <div
+                className="bg-gradient-to-r from-blue-600 to-blue-400 h-2 rounded-full transition-all duration-400"
+                style={{ width: `${publishingProgress}%` }}
+              />
+            </div>
+            <p className="text-gray-500 text-xs text-center mt-3">
+              {publishingProgress === 100 ? "Post live hai LinkedIn pe! 🚀" : "LinkedIn se connect ho rahe hain..."}
+            </p>
+          </div>
+        </div>
+      )}
       {/* Top Header */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-slate-800 border-b border-slate-700 px-6 py-3">
         <div className="flex items-center justify-between">
