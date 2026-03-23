@@ -53,7 +53,7 @@ export default function EmailVerificationStep({ userData, updateUserData, nextSt
           Email Verification
         </h2>
         <p className="text-gray-300 text-lg">
-          Pehle aapka email verify karte hain taaki aapka account secure rahe
+          First, let's verify your email to keep your account secure
         </p>
       </motion.div>
 
@@ -125,7 +125,7 @@ export default function EmailVerificationStep({ userData, updateUserData, nextSt
             </div>
             <h3 className="text-xl font-semibold text-white">Email Verified!</h3>
             <p className="text-gray-300">
-              Great! Aapka email successfully verify ho gaya hai
+              Your email has been successfully verified
             </p>
             <div className="flex items-center justify-center space-x-2 text-green-400">
               <Icon name="arrow-right" size={16} />

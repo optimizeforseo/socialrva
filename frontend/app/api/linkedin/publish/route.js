@@ -34,7 +34,7 @@ export async function POST(request) {
     const profile = await profileRes.json();
     const authorUrn = `urn:li:person:${profile.sub}`;
 
-    // Agar image hai toh image ke saath post karo
+    // If image provided, publish with image
     if (imageUrl) {
       try {
         // Step 1: Register image upload with LinkedIn

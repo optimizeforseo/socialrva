@@ -70,7 +70,7 @@ export default function LinkedInTopicsStep({ userData, updateUserData, nextStep 
           Finding Relevant Topics
         </h2>
         <p className="text-gray-300 text-lg">
-          LinkedIn ke topics select kariye jo aapke interest match karte hain
+          Select LinkedIn topics that match your interests
         </p>
       </motion.div>
 

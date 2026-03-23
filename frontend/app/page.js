@@ -105,8 +105,8 @@ export default function Home() {
             </h2>
             <p className="text-gray-400">
               {isCheckingOnboarding 
-                ? 'Ek second, aapka data check kar rahe hain...' 
-                : 'Aapka guided social growth experience ready kar rahe hain...'}
+                ? 'Please wait, checking your account...' 
+                : 'Preparing your social growth experience...'}
             </p>
           </motion.div>
 
@@ -184,7 +184,7 @@ export default function Home() {
             transition={{ delay: 0.5 }}
           >
             <h2 className="text-2xl font-bold text-white mb-2">Loading SocialRva</h2>
-            <p className="text-gray-400">Aapka guided social growth experience ready kar rahe hain...</p>
+            <p className="text-gray-400">Preparing your social growth experience...</p>
           </motion.div>
 
           {/* Progress Dots */}
@@ -347,10 +347,10 @@ export default function Home() {
                   className="text-lg text-gray-300 leading-relaxed max-w-xl"
                 >
                   <span>
-                    Apni social media presence ko transform karo{" "}
-                    <span className="text-blue-400 font-semibold">AI-powered content creation</span> ke saath, 
-                    smart analytics, aur guided growth strategies. Join karo{" "}
-                    <span className="text-blue-300 font-semibold">10,000+ creators</span> jo already grow kar rahe hain SocialRva ke saath!
+                    Transform your social media presence with{" "}
+                    <span className="text-blue-400 font-semibold">AI-powered content creation</span>,{" "}
+                    smart analytics, and guided growth strategies. Join{" "}
+                    <span className="text-blue-300 font-semibold">10,000+ creators</span> already growing with SocialRva!
                   </span>
                   <span className="inline-block ml-2">
                     <AnimatedIcon name="sparkles" animation="glow" size={18} />
@@ -392,15 +392,14 @@ export default function Home() {
 
                 {/* Terms */}
                 <p className="text-xs text-gray-500 text-center">
-                  Continue karne se aap hamare{" "}
+                  By continuing, you agree to our{" "}
                   <a href="#" className="text-blue-400 hover:text-blue-300 underline transition-colors">
                     Terms of Service
                   </a>{" "}
-                  aur{" "}
+                  and{" "}
                   <a href="#" className="text-blue-400 hover:text-blue-300 underline transition-colors">
                     Privacy Policy
-                  </a>{" "}
-                  se agree karte hain
+                  </a>
                 </p>
               </motion.div>
             </motion.div>

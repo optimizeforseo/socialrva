@@ -149,7 +149,7 @@ export default function OnboardingFlow() {
             />
             <div className="text-white">
               <h1 className="text-lg font-semibold">Welcome to SocialRva</h1>
-              <p className="text-sm text-gray-400">Aapka guided social growth journey shuru karte hain</p>
+              <p className="text-sm text-gray-400">Your guided social growth journey starts here</p>
             </div>
           </div>
           

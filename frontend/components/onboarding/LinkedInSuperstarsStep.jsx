@@ -120,7 +120,7 @@ export default function LinkedInSuperstarsStep({ userData, updateUserData, nextS
           Discovering Your LinkedIn Superstars
         </h2>
         <p className="text-gray-300 text-lg">
-          Aapke selected topics ke hisab se real LinkedIn ke top influencers discover karte hain
+          Discover top LinkedIn influencers based on your selected topics
         </p>
       </motion.div>
 
@@ -139,7 +139,7 @@ export default function LinkedInSuperstarsStep({ userData, updateUserData, nextS
             Fetching Real LinkedIn Data...
           </h3>
           <p className="text-gray-400">
-            LinkedIn API se aapke interests ke basis pe authentic profiles load kar rahe hain
+            Loading authentic profiles from LinkedIn based on your interests
           </p>
         </motion.div>
       ) : error ? (

@@ -125,11 +125,11 @@ export default function CreateAI() {
     setIsGenerating(true);
     setError(null);
     setGeneratingProgress(0);
-    setGeneratingStep("Topic analyze kar rahe hain...");
+    setGeneratingStep("Analyzing your topic...");
 
     try {
       setGeneratingProgress(15);
-      setGeneratingStep("AI content draft kar raha hai...");
+      setGeneratingStep("AI is drafting your content...");
 
       const response = await aiService.generateText(inputContent, {
         writingStyle: writingStyle.toLowerCase(),
@@ -142,7 +142,7 @@ export default function CreateAI() {
 
       if (response.success) {
         setGeneratingProgress(40);
-        setGeneratingStep("Variation 1 ready, aur bana rahe hain...");
+        setGeneratingStep("Variation 1 ready, generating more...");
 
         const variations = [
           { id: 1, content: response.data.content, metadata: response.data.metadata },
@@ -151,7 +151,7 @@ export default function CreateAI() {
         for (let i = 2; i <= 3; i++) {
           try {
             setGeneratingProgress(40 + i * 15);
-            setGeneratingStep(`Variation ${i} generate ho rahi hai...`);
+            setGeneratingStep(`Generating variation ${i}...`);
 
             const variationResponse = await aiService.generateText(inputContent, {
               writingStyle: writingStyle.toLowerCase(),
@@ -173,7 +173,7 @@ export default function CreateAI() {
         }
 
         setGeneratingProgress(85);
-        setGeneratingStep("Content finalize ho raha hai...");
+        setGeneratingStep("Finalizing your content...");
 
         setGeneratedVariations(variations);
         setGeneratedContent(variations[0]);
@@ -181,7 +181,7 @@ export default function CreateAI() {
 
         if (generateImageWithPost) {
           setGeneratingProgress(88);
-          setGeneratingStep("Topic se image generate ho rahi hai...");
+          setGeneratingStep("Generating image from your topic...");
           setGeneratedPostImage(null);
           try {
             const imgResponse = await aiService.generateImage(
@@ -602,7 +602,7 @@ export default function CreateAI() {
 
     setIsPublishing(true);
     setPublishingProgress(0);
-    setPublishingStep("Post prepare ho raha hai...");
+    setPublishingStep("Preparing your post...");
     setError(null);
 
     try {
@@ -621,11 +621,11 @@ export default function CreateAI() {
       }
 
       setPublishingProgress(25);
-      setPublishingStep("LinkedIn se connect ho rahe hain...");
+      setPublishingStep("Connecting to LinkedIn...");
 
       if (generatedPostImage) {
         setPublishingProgress(45);
-        setPublishingStep("Image upload ho rahi hai...");
+        setPublishingStep("Uploading image...");
       }
 
       const response = await fetch("/api/linkedin/publish", {
@@ -640,7 +640,7 @@ export default function CreateAI() {
       });
 
       setPublishingProgress(85);
-      setPublishingStep("Post publish ho raha hai...");
+      setPublishingStep("Publishing your post...");
 
       const data = await response.json();
 
@@ -816,7 +816,7 @@ Create a similar post that follows the same structure and viral elements but wit
                   {generatingProgress}%
                 </span>
               </div>
-              <h3 className="text-white font-semibold text-lg mb-1">Content Generate Ho Raha Hai</h3>
+              <h3 className="text-white font-semibold text-lg mb-1">Generating Content</h3>
               <p className="text-purple-400 text-sm">{generatingStep}</p>
             </div>
             <div className="w-full bg-slate-700 rounded-full h-2">
@@ -825,7 +825,7 @@ Create a similar post that follows the same structure and viral elements but wit
                 style={{ width: `${generatingProgress}%` }}
               />
             </div>
-            <p className="text-gray-500 text-xs text-center mt-3">Thoda wait karo, AI kaam kar raha hai ✨</p>
+            <p className="text-gray-500 text-xs text-center mt-3">Please wait, AI is working its magic ✨</p>
           </div>
         </div>
       )}
@@ -850,7 +850,7 @@ Create a similar post that follows the same structure and viral elements but wit
                 </span>
               </div>
               <h3 className="text-white font-semibold text-lg mb-1">
-                {publishingProgress === 100 ? "Published! 🎉" : "LinkedIn Pe Publish Ho Raha Hai"}
+                {publishingProgress === 100 ? "Published! 🎉" : "Publishing to LinkedIn"}
               </h3>
               <p className="text-blue-400 text-sm">{publishingStep}</p>
             </div>
@@ -861,7 +861,7 @@ Create a similar post that follows the same structure and viral elements but wit
               />
             </div>
             <p className="text-gray-500 text-xs text-center mt-3">
-              {publishingProgress === 100 ? "Post live hai LinkedIn pe! 🚀" : "LinkedIn se connect ho rahe hain..."}
+              {publishingProgress === 100 ? "Your post is live on LinkedIn! 🚀" : "Connecting to LinkedIn..."}
             </p>
           </div>
         </div>
@@ -1543,7 +1543,7 @@ Create a similar post that follows the same structure and viral elements but wit
                       <h3 className="text-sm font-medium text-white">Generate image with post</h3>
                     </div>
                     <p className="text-xs text-gray-400 mt-1">
-                      Topic se matching AI image bhi generate hogi
+                      AI will generate a matching image for your topic
                     </p>
                   </div>
                   <button

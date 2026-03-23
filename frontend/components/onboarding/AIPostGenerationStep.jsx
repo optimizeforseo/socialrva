@@ -186,7 +186,7 @@ What are your thoughts on ${customTopic}? I'd love to hear your perspective!
           Generate Your First Post by AI
         </h2>
         <p className="text-gray-300 text-lg">
-          AI se aapka pehla professional post banayiye - beautiful design ke saath
+          Create your first professional post with AI — with beautiful design
         </p>
       </motion.div>
 

@@ -60,7 +60,7 @@ export default function LanguageCountryStep({ userData, updateUserData, nextStep
           Language & Country Selection
         </h2>
         <p className="text-gray-300 text-lg">
-          Aapki language aur country select kariye taaki hum aapko personalized content de sakein
+          Select your language and country so we can personalize your content
         </p>
       </motion.div>
 

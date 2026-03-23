@@ -122,7 +122,7 @@ export default function IndustryLeadersStep({ userData, updateUserData, nextStep
           Discover Industry Thought Leaders
         </h2>
         <p className="text-gray-300 text-lg">
-          Aapke field ke real top industry leaders ko follow kariye inspiration ke liye
+          Follow real top industry leaders in your field for inspiration
         </p>
       </motion.div>
 
@@ -141,7 +141,7 @@ export default function IndustryLeadersStep({ userData, updateUserData, nextStep
             Fetching Real Industry Leaders...
           </h3>
           <p className="text-gray-400">
-            LinkedIn API se aapke interests ke basis pe authentic industry leaders load kar rahe hain
+            Loading authentic industry leaders from LinkedIn based on your interests
           </p>
         </motion.div>
       ) : error ? (

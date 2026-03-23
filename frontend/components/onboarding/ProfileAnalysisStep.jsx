@@ -150,7 +150,7 @@ export default function ProfileAnalysisStep({ userData, updateUserData, nextStep
           Analyzing Profile by AI
         </h2>
         <p className="text-gray-300 text-lg">
-          AI aapke LinkedIn profile ko analyze kar raha hai personalized insights ke liye
+          AI is analyzing your LinkedIn profile for personalized insights
         </p>
       </motion.div>
 
