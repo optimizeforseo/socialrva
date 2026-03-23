@@ -181,18 +181,38 @@ export default function CreateAI() {
 
         if (generateImageWithPost) {
           setGeneratingProgress(88);
-          setGeneratingStep("Generating image from your topic...");
+          setGeneratingStep("Generating images for each variation...");
           setGeneratedPostImage(null);
-          try {
-            const imgResponse = await aiService.generateImage(
-              `Professional LinkedIn post image about: ${inputContent}`,
-              { style: "realistic", aspectRatio: "landscape", userId: user?.id || null }
-            );
-            if (imgResponse.success) {
-              setGeneratedPostImage(imgResponse.data.imageUrl);
-            }
-          } catch (imgErr) {
-            console.log("Image generation failed:", imgErr.message);
+
+          // Generate a unique image per variation with different style prompts
+          const imageStyles = [
+            `Professional LinkedIn post image about: ${inputContent}`,
+            `Creative visual representation of: ${inputContent}, modern style`,
+            `Minimalist business illustration about: ${inputContent}`,
+          ];
+
+          const updatedVariations = await Promise.all(
+            variations.map(async (v, idx) => {
+              try {
+                setGeneratingStep(`Generating image for variation ${idx + 1}...`);
+                const imgResponse = await aiService.generateImage(
+                  imageStyles[idx] || imageStyles[0],
+                  { style: "realistic", aspectRatio: "landscape", userId: user?.id || null }
+                );
+                return {
+                  ...v,
+                  imageUrl: imgResponse.success ? imgResponse.data.imageUrl : null,
+                };
+              } catch {
+                return { ...v, imageUrl: null };
+              }
+            })
+          );
+
+          setGeneratedVariations(updatedVariations);
+          setGeneratedContent(updatedVariations[0]);
+          if (updatedVariations[0]?.imageUrl) {
+            setGeneratedPostImage(updatedVariations[0].imageUrl);
           }
         }
 
@@ -2107,6 +2127,10 @@ Create a similar post that follows the same structure and viral elements but wit
                       onClick={() => {
                         setSelectedVariation(index);
                         setGeneratedContent(generatedVariations[index]);
+                        // Update image when switching variation
+                        if (generateImageWithPost) {
+                          setGeneratedPostImage(generatedVariations[index]?.imageUrl || null);
+                        }
                       }}
                       className={`w-8 h-8 rounded-full text-sm font-medium transition-all ${
                         selectedVariation === index
