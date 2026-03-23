@@ -45,13 +45,13 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black flex">
+    <div className="h-screen bg-black flex overflow-hidden">
       {/* Sidebar */}
       <motion.aside
         initial={{ width: sidebarExpanded ? 280 : 80 }}
         animate={{ width: sidebarExpanded ? 280 : 80 }}
         transition={{ duration: 0.3 }}
-        className="bg-slate-900/50 backdrop-blur-xl border-r border-blue-500/30 flex flex-col"
+        className="bg-slate-900/50 backdrop-blur-xl border-r border-blue-500/30 flex flex-col flex-shrink-0 h-screen"
       >
         {/* Sidebar Header */}
         <div className="p-6 border-b border-blue-500/20">
@@ -85,7 +85,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Navigation Items */}
-        <nav className="flex-1 p-4">
+        <nav className="flex-1 p-4 overflow-y-auto">
           <div className="space-y-2">
             {sidebarItems.map((item, index) => (
               <motion.button
@@ -125,7 +125,7 @@ export default function DashboardPage() {
         </nav>
 
         {/* User Profile */}
-        <div className="p-4 border-t border-blue-500/20">
+        <div className="p-4 border-t border-blue-500/20 flex-shrink-0">
           <div className={`flex items-center ${sidebarExpanded ? 'space-x-3' : 'justify-center'}`}>
             {user?.profilePicture ? (
               <img
@@ -167,7 +167,7 @@ export default function DashboardPage() {
       </motion.aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
         {/* Top Header */}
         <motion.header
           initial={{ opacity: 0, y: -20 }}
